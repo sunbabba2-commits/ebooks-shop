@@ -76,16 +76,69 @@ export default function MobileMenu({ menu }: { menu: Menu[] }) {
                     <Search />
                   </Suspense>
                 </div>
+                
+                {/* Static Navigation Links */}
+                <ul className="mb-4 flex w-full flex-col border-b border-neutral-200 dark:border-neutral-800">
+                  <li className="border-b border-neutral-200 dark:border-neutral-800">
+                    <Link
+                      href="/about"
+                      prefetch={true}
+                      onClick={closeMobileMenu}
+                      className="block py-3 text-lg font-medium text-black transition-colors hover:text-blue-600 dark:text-white dark:hover:text-blue-400"
+                    >
+                      About CoachAKen
+                    </Link>
+                  </li>
+                  <li className="border-b border-neutral-200 dark:border-neutral-800">
+                    <Link
+                      href="/membership"
+                      prefetch={true}
+                      onClick={closeMobileMenu}
+                      className="block py-3 text-lg font-medium text-black transition-colors hover:text-blue-600 dark:text-white dark:hover:text-blue-400"
+                    >
+                      Membership
+                    </Link>
+                  </li>
+                  <li className="border-b border-neutral-200 dark:border-neutral-800">
+                    <Link
+                      href="/contact"
+                      prefetch={true}
+                      onClick={closeMobileMenu}
+                      className="block py-3 text-lg font-medium text-black transition-colors hover:text-blue-600 dark:text-white dark:hover:text-blue-400"
+                    >
+                      Contact
+                    </Link>
+                  </li>
+                </ul>
+                
                 {menu.length ? (
                   <ul className="flex w-full flex-col">
                     {menu.map((item: Menu) => (
-                      <li
-                        className="py-2 text-xl text-black transition-colors hover:text-neutral-500 dark:text-white"
-                        key={item.title}
-                      >
-                        <Link href={item.path} prefetch={true} onClick={closeMobileMenu}>
+                      <li key={item.title} className="border-b border-neutral-200 dark:border-neutral-800">
+                        <Link
+                          href={item.path}
+                          prefetch={true}
+                          onClick={closeMobileMenu}
+                          className="block py-3 text-lg font-medium text-black transition-colors hover:text-blue-600 dark:text-white dark:hover:text-blue-400"
+                        >
                           {item.title}
                         </Link>
+                        {item.items && item.items.length > 0 && (
+                          <ul className="mb-2 ml-4 space-y-1">
+                            {item.items.map((subItem) => (
+                              <li key={subItem.title}>
+                                <Link
+                                  href={subItem.path}
+                                  prefetch={true}
+                                  onClick={closeMobileMenu}
+                                  className="block py-2 text-sm text-neutral-600 transition-colors hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400"
+                                >
+                                  • {subItem.title}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
                       </li>
                     ))}
                   </ul>

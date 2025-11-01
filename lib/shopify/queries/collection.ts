@@ -10,6 +10,15 @@ const collectionFragment = /* GraphQL */ `
       ...seo
     }
     updatedAt
+    icon: metafield(namespace: "custom", key: "icon") {
+      value
+    }
+    color: metafield(namespace: "custom", key: "color") {
+      value
+    }
+    shortDescription: metafield(namespace: "custom", key: "short_description") {
+      value
+    }
   }
   ${seoFragment}
 `;

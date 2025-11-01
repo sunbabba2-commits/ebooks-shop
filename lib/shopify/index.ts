@@ -6,9 +6,9 @@ import {
 import { isShopifyError } from 'lib/type-guards';
 import { ensureStartsWith } from 'lib/utils';
 import {
-  revalidateTag,
+  unstable_cacheLife as cacheLife,
   unstable_cacheTag as cacheTag,
-  unstable_cacheLife as cacheLife
+  revalidateTag
 } from 'next/cache';
 import { cookies, headers } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
@@ -376,12 +376,21 @@ export async function getMenu(handle: string): Promise<Menu[]> {
   });
 
   return (
-    res.body?.data?.menu?.items.map((item: { title: string; url: string }) => ({
+    res.body?.data?.menu?.items.map((item: { title: string; url: string; items?: { title: string; url: string }[] }) => ({
       title: item.title,
       path: item.url
         .replace(domain, '')
         .replace('/collections', '/search')
-        .replace('/pages', '')
+        .replace('/pages', ''),
+      ...(item.items && item.items.length > 0 && {
+        items: item.items.map((subItem) => ({
+          title: subItem.title,
+          path: subItem.url
+            .replace(domain, '')
+            .replace('/collections', '/search')
+            .replace('/pages', '')
+        }))
+      })
     })) || []
   );
 }

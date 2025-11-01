@@ -1,17 +1,19 @@
 'use client';
 
-import clsx from 'clsx';
 import { Dialog, Transition } from '@headlessui/react';
 import { ShoppingCartIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import clsx from 'clsx';
 import LoadingDots from 'components/loading-dots';
 import Price from 'components/price';
 import { DEFAULT_OPTION } from 'lib/constants';
+import { openPaddleCheckout } from 'lib/paddle/client';
+import { getPaddlePriceId } from 'lib/paddle/product-mapping';
 import { createUrl } from 'lib/utils';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Fragment, useEffect, useRef, useState } from 'react';
-import { useFormStatus } from 'react-dom';
-import { createCartAndSetCookie, redirectToCheckout } from './actions';
+import { toast } from 'sonner';
+import { createCartAndSetCookie } from './actions';
 import { useCart } from './cart-context';
 import { DeleteItemButton } from './delete-item-button';
 import { EditItemQuantityButton } from './edit-item-quantity-button';
@@ -215,9 +217,7 @@ export default function CartModal() {
                       />
                     </div>
                   </div>
-                  <form action={redirectToCheckout}>
-                    <CheckoutButton />
-                  </form>
+                  <CheckoutButton cart={cart} closeCart={closeCart} />
                 </div>
               )}
             </Dialog.Panel>
@@ -241,16 +241,59 @@ function CloseCart({ className }: { className?: string }) {
   );
 }
 
-function CheckoutButton() {
-  const { pending } = useFormStatus();
+function CheckoutButton({ cart, closeCart }: { cart: any; closeCart: () => void }) {
+  const [loading, setLoading] = useState(false);
+
+  const handleCheckout = async () => {
+    if (!cart || cart.lines.length === 0) {
+      toast.error('Your cart is empty');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // 将购物车商品转换为Paddle格式
+      const items = cart.lines.map((line: any) => ({
+        priceId: getPaddlePriceId(line.merchandise.product.id),
+        quantity: line.quantity,
+      }));
+
+      // 打开Paddle结账
+      await openPaddleCheckout({
+        items,
+        customData: {
+          cartId: cart.id,
+          shopifyCheckoutUrl: cart.checkoutUrl,
+        },
+      });
+
+      // 监听支付完成事件
+      const handlePaymentComplete = (event: any) => {
+        console.log('Payment completed:', event.detail);
+        toast.success('Payment successful!');
+        closeCart();
+        // 可以在这里清空购物车或跳转到订单页面
+        window.removeEventListener('paddle:checkout:completed', handlePaymentComplete);
+      };
+
+      window.addEventListener('paddle:checkout:completed', handlePaymentComplete);
+
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast.error('Failed to open payment page. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <button
-      className="block w-full rounded-full bg-blue-600 p-3 text-center text-sm font-medium text-white opacity-90 hover:opacity-100"
-      type="submit"
-      disabled={pending}
+      className="block w-full rounded-full bg-blue-600 p-3 text-center text-sm font-medium text-white opacity-90 hover:opacity-100 disabled:opacity-50"
+      onClick={handleCheckout}
+      disabled={loading}
     >
-      {pending ? <LoadingDots className="bg-white" /> : 'Proceed to Checkout'}
+      {loading ? <LoadingDots className="bg-white" /> : 'Proceed to Checkout'}
     </button>
   );
 }
