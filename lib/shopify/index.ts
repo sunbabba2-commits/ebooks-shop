@@ -62,7 +62,12 @@ const domain = process.env.SHOPIFY_STORE_DOMAIN
   ? ensureStartsWith(process.env.SHOPIFY_STORE_DOMAIN, 'https://')
   : '';
 const endpoint = `${domain}${SHOPIFY_GRAPHQL_API_ENDPOINT}`;
-const key = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN!;
+const key = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN || '';
+
+// Validate Shopify configuration
+if (!domain || !key) {
+  console.warn('Shopify configuration is incomplete. Please set SHOPIFY_STORE_DOMAIN and SHOPIFY_STOREFRONT_ACCESS_TOKEN environment variables.');
+}
 
 type ExtractVariables<T> = T extends { variables: object }
   ? T['variables']
@@ -77,6 +82,16 @@ export async function shopifyFetch<T>({
   query: string;
   variables?: ExtractVariables<T>;
 }): Promise<{ status: number; body: T } | never> {
+  // Check if Shopify is configured
+  if (!domain || !key) {
+    throw {
+      cause: 'Missing Shopify configuration',
+      status: 500,
+      message: 'SHOPIFY_STORE_DOMAIN and SHOPIFY_STOREFRONT_ACCESS_TOKEN must be set',
+      query
+    };
+  }
+
   try {
     const result = await fetch(endpoint, {
       method: 'POST',
@@ -337,30 +352,65 @@ export async function getCollections(): Promise<Collection[]> {
   cacheTag(TAGS.collections);
   cacheLife('days');
 
-  const res = await shopifyFetch<ShopifyCollectionsOperation>({
-    query: getCollectionsQuery
-  });
-  const shopifyCollections = removeEdgesAndNodes(res.body?.data?.collections);
-  const collections = [
-    {
-      handle: '',
-      title: 'All',
-      description: 'All products',
-      seo: {
+  // Return default collection if Shopify is not configured
+  if (!domain || !key) {
+    console.warn('getCollections called but Shopify is not configured. Returning default collection.');
+    return [
+      {
+        handle: '',
         title: 'All',
-        description: 'All products'
-      },
-      path: '/search',
-      updatedAt: new Date().toISOString()
-    },
-    // Filter out the `hidden` collections.
-    // Collections that start with `hidden-*` need to be hidden on the search page.
-    ...reshapeCollections(shopifyCollections).filter(
-      (collection) => !collection.handle.startsWith('hidden')
-    )
-  ];
+        description: 'All products',
+        seo: {
+          title: 'All',
+          description: 'All products'
+        },
+        path: '/search',
+        updatedAt: new Date().toISOString()
+      }
+    ];
+  }
 
-  return collections;
+  try {
+    const res = await shopifyFetch<ShopifyCollectionsOperation>({
+      query: getCollectionsQuery
+    });
+    const shopifyCollections = removeEdgesAndNodes(res.body?.data?.collections);
+    const collections = [
+      {
+        handle: '',
+        title: 'All',
+        description: 'All products',
+        seo: {
+          title: 'All',
+          description: 'All products'
+        },
+        path: '/search',
+        updatedAt: new Date().toISOString()
+      },
+      // Filter out the `hidden` collections.
+      // Collections that start with `hidden-*` need to be hidden on the search page.
+      ...reshapeCollections(shopifyCollections).filter(
+        (collection) => !collection.handle.startsWith('hidden')
+      )
+    ];
+
+    return collections;
+  } catch (error) {
+    console.error('Error fetching collections:', error);
+    return [
+      {
+        handle: '',
+        title: 'All',
+        description: 'All products',
+        seo: {
+          title: 'All',
+          description: 'All products'
+        },
+        path: '/search',
+        updatedAt: new Date().toISOString()
+      }
+    ];
+  }
 }
 
 export async function getMenu(handle: string): Promise<Menu[]> {
@@ -368,31 +418,42 @@ export async function getMenu(handle: string): Promise<Menu[]> {
   cacheTag(TAGS.collections);
   cacheLife('days');
 
-  const res = await shopifyFetch<ShopifyMenuOperation>({
-    query: getMenuQuery,
-    variables: {
-      handle
-    }
-  });
+  // Return empty array if Shopify is not configured
+  if (!domain || !key) {
+    console.warn(`getMenu called but Shopify is not configured. Returning empty menu.`);
+    return [];
+  }
 
-  return (
-    res.body?.data?.menu?.items.map((item: { title: string; url: string; items?: { title: string; url: string }[] }) => ({
-      title: item.title,
-      path: item.url
-        .replace(domain, '')
-        .replace('/collections', '/search')
-        .replace('/pages', ''),
-      ...(item.items && item.items.length > 0 && {
-        items: item.items.map((subItem) => ({
-          title: subItem.title,
-          path: subItem.url
-            .replace(domain, '')
-            .replace('/collections', '/search')
-            .replace('/pages', '')
-        }))
-      })
-    })) || []
-  );
+  try {
+    const res = await shopifyFetch<ShopifyMenuOperation>({
+      query: getMenuQuery,
+      variables: {
+        handle
+      }
+    });
+
+    return (
+      res.body?.data?.menu?.items.map((item: { title: string; url: string; items?: { title: string; url: string }[] }) => ({
+        title: item.title,
+        path: item.url
+          .replace(domain, '')
+          .replace('/collections', '/search')
+          .replace('/pages', ''),
+        ...(item.items && item.items.length > 0 && {
+          items: item.items.map((subItem) => ({
+            title: subItem.title,
+            path: subItem.url
+              .replace(domain, '')
+              .replace('/collections', '/search')
+              .replace('/pages', '')
+          }))
+        })
+      })) || []
+    );
+  } catch (error) {
+    console.error(`Error fetching menu "${handle}":`, error);
+    return [];
+  }
 }
 
 export async function getPage(handle: string): Promise<Page> {
@@ -457,16 +518,27 @@ export async function getProducts({
   cacheTag(TAGS.products);
   cacheLife('days');
 
-  const res = await shopifyFetch<ShopifyProductsOperation>({
-    query: getProductsQuery,
-    variables: {
-      query,
-      reverse,
-      sortKey
-    }
-  });
+  // Return empty array if Shopify is not configured
+  if (!domain || !key) {
+    console.warn('getProducts called but Shopify is not configured. Returning empty array.');
+    return [];
+  }
 
-  return reshapeProducts(removeEdgesAndNodes(res.body.data.products));
+  try {
+    const res = await shopifyFetch<ShopifyProductsOperation>({
+      query: getProductsQuery,
+      variables: {
+        query,
+        reverse,
+        sortKey
+      }
+    });
+
+    return reshapeProducts(removeEdgesAndNodes(res.body.data.products));
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return [];
+  }
 }
 
 // This is called from `app/api/revalidate.ts` so providers can control revalidation logic.
