@@ -69,8 +69,7 @@ export default async function Footer() {
       <div className="border-t border-neutral-200 bg-white py-6 dark:border-neutral-800 dark:bg-black">
         <div className="mx-auto flex w-full max-w-7xl flex-col items-center gap-3 px-6 text-xs md:flex-row md:gap-0 md:px-4 min-[1320px]:px-0">
           <p className="text-neutral-600 dark:text-neutral-400">
-            &copy; {copyrightDate} {copyrightName}
-            {copyrightName.length && !copyrightName.endsWith('.') ? '.' : ''} All rights reserved.
+            &copy; {copyrightDate} coachaken, Inc. All rights reserved.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4 md:ml-auto">
             <Link
