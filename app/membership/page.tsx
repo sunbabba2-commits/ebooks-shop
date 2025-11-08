@@ -1,5 +1,7 @@
 import Footer from 'components/layout/footer';
 import Link from 'next/link';
+import { Suspense } from 'react';
+import OrderSnRedirect from './OrderSnRedirect';
 
 export const metadata = {
   title: 'Coach AKen Digital Membership | Science-Based Fitness Education',
@@ -10,6 +12,9 @@ export const metadata = {
 export default function MembershipPage() {
   return (
     <>
+      <Suspense fallback={null}>
+        <OrderSnRedirect />
+      </Suspense>
       <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-white dark:from-neutral-950 dark:to-neutral-900">
         {/* Hero Section */}
         <section className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 py-20 dark:from-indigo-700 dark:via-purple-700 dark:to-pink-600">
