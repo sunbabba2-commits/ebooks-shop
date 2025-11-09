@@ -18,8 +18,8 @@ function PaymentLoadingPage({ orderSn }: { orderSn: string }) {
         <PaymentRedirectHandler orderSn={orderSn} />
       </Suspense>
       
-      {/* 加载页面 UI */}
-      <div className="flex min-h-screen items-center justify-center bg-white">
+      {/* 加载页面 UI - 完全覆盖整个页面，包括导航栏 */}
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white">
         <div className="max-w-md px-6 text-center">
           {/* 加载动画 */}
           <div className="mb-6 flex justify-center">
