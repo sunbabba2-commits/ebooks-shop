@@ -8,7 +8,6 @@ export default function OrderSnRedirect() {
 
   useEffect(() => {
     const orderSn = searchParams.get('orderSn');
-    
     if (orderSn) {
       // Call the API to get the jump URL
       fetch('https://api.antsports.tv/api/jump-url', {
@@ -25,13 +24,11 @@ export default function OrderSnRedirect() {
           return response.json();
         })
         .then((data) => {
-          if (data.jumpUrl) {
+          const {data:{jumpUrl = ''}} = data || {}
+          if (jumpUrl) {
             // Redirect to the jump URL
-            window.location.href = data.jumpUrl;
+            window.location.href = jumpUrl;
           }
-        })
-        .catch((error) => {
-          console.error('Error fetching jump URL:', error);
         });
     }
   }, [searchParams]);
