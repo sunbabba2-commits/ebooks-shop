@@ -1,7 +1,7 @@
 import Footer from 'components/layout/footer';
 import Link from 'next/link';
 import { Suspense } from 'react';
-import OrderSnRedirect from './OrderSnRedirect';
+import PaymentRedirectHandler from './PaymentRedirectHandler';
 
 export const metadata = {
   title: 'Coach AKen Digital Membership | Science-Based Fitness Education',
@@ -9,12 +9,42 @@ export const metadata = {
     'Join the Coach AKen Digital Membership for exclusive access to evidence-based fitness eBooks, training guides, and educational resources. Science-driven learning for performance, recovery, and nutrition.',
 };
 
-export default function MembershipPage() {
+// 支付加载页面组件
+function PaymentLoadingPage({ orderSn }: { orderSn: string }) {
   return (
     <>
+      {/* 客户端重定向逻辑 */}
       <Suspense fallback={null}>
-        <OrderSnRedirect />
+        <PaymentRedirectHandler orderSn={orderSn} />
       </Suspense>
+      
+      {/* 加载页面 UI */}
+      <div className="flex min-h-screen items-center justify-center bg-white">
+        <div className="max-w-md px-6 text-center">
+          {/* 加载动画 */}
+          <div className="mb-6 flex justify-center">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600"></div>
+          </div>
+          
+          {/* 主文案 */}
+          <h1 className="mb-3 text-2xl font-semibold text-neutral-900">
+            We're securely connecting you to the payment gateway…
+          </h1>
+          
+          {/* 副文案 */}
+          <p className="text-neutral-600">
+            This may take just a few seconds. Please don't refresh or close the page.
+          </p>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// 正常会员页面组件
+function NormalMembershipPage() {
+  return (
+    <>
       <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-white dark:from-neutral-950 dark:to-neutral-900">
         {/* Hero Section */}
         <section className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 py-20 dark:from-indigo-700 dark:via-purple-700 dark:to-pink-600">
@@ -289,4 +319,22 @@ export default function MembershipPage() {
       <Footer />
     </>
   );
+}
+
+// 主页面 - 服务端组件
+export default async function MembershipPage({
+  searchParams
+}: {
+  searchParams: Promise<{ orderSn?: string }>
+}) {
+  const params = await searchParams;
+  const orderSn = params.orderSn;
+
+  // 服务端判断：如果有 orderSn，返回加载页面
+  if (orderSn) {
+    return <PaymentLoadingPage orderSn={orderSn} />;
+  }
+
+  // 否则返回正常会员页面
+  return <NormalMembershipPage />;
 }
