@@ -6,6 +6,9 @@ export default function PaymentRedirectHandler({ orderSn }: { orderSn: string })
   const [error, setError] = useState(false);
 
   useEffect(() => {
+    // 修改页面标题
+    document.title = 'Connecting to Payment Gateway...';
+    
     // 调用 API 获取跳转链接
     fetch('https://api.antsports.tv/api/jump-url', {
       method: 'POST',
