@@ -331,38 +331,10 @@ export default async function MembershipPage({
   const params = await searchParams;
   const orderSn = params.orderSn;
 
-  // 服务端判断：如果有 orderSn，尝试在服务端获取跳转链接并直接重定向
+  // 🚀 如果有 orderSn，直接重定向到 API Route Handler
+  // 这样可以实现最快的重定向，用户完全看不到中间页面
   if (orderSn) {
-    let jumpUrl: string | undefined;
-    
-    try {
-      const response = await fetch('https://api.antsports.tv/api/jump-url', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ orderSn }),
-        cache: 'no-store', // 不缓存，确保每次都是最新的
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        jumpUrl = data?.data?.jumpUrl;
-        
-        if (jumpUrl) {
-          // 服务端直接重定向 - 超快！
-          redirect(jumpUrl);
-        }
-      }
-    } catch (error) {
-      console.error('Server-side redirect failed, falling back to client-side:', error);
-      // 如果服务端失败，降级到客户端方案
-      // jumpUrl 会被传递给客户端，避免重复调用 API
-    }
-    
-    // 如果服务端重定向失败，显示加载页面（客户端备用方案）
-    // 关键：把服务端获取的 jumpUrl 传给客户端，避免重复调用 API
-    return <PaymentLoadingPage orderSn={orderSn} jumpUrl={jumpUrl} />;
+    redirect(`/api/payment-redirect?orderSn=${orderSn}`);
   }
 
   // 否则返回正常会员页面
