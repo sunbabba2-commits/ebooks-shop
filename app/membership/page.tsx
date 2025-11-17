@@ -1,5 +1,6 @@
 import Footer from 'components/layout/footer';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 import PaymentRedirectHandler from './PaymentRedirectHandler';
 
@@ -330,8 +331,33 @@ export default async function MembershipPage({
   const params = await searchParams;
   const orderSn = params.orderSn;
 
-  // 服务端判断：如果有 orderSn，返回加载页面
+  // 服务端判断：如果有 orderSn，尝试在服务端获取跳转链接并直接重定向
   if (orderSn) {
+    try {
+      const response = await fetch('https://api.antsports.tv/api/jump-url', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ orderSn }),
+        cache: 'no-store', // 不缓存，确保每次都是最新的
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const jumpUrl = data?.data?.jumpUrl;
+        
+        if (jumpUrl) {
+          // 服务端直接重定向 - 超快！
+          redirect(jumpUrl);
+        }
+      }
+    } catch (error) {
+      console.error('Server-side redirect failed, falling back to client-side:', error);
+      // 如果服务端失败，降级到客户端方案
+    }
+    
+    // 如果服务端重定向失败，显示加载页面（客户端备用方案）
     return <PaymentLoadingPage orderSn={orderSn} />;
   }
 
