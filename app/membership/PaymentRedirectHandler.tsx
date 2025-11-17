@@ -2,14 +2,28 @@
 
 import { useEffect, useState } from 'react';
 
-export default function PaymentRedirectHandler({ orderSn }: { orderSn: string }) {
+export default function PaymentRedirectHandler({ 
+  orderSn, 
+  jumpUrl 
+}: { 
+  orderSn: string; 
+  jumpUrl?: string;
+}) {
   const [error, setError] = useState(false);
 
   useEffect(() => {
     // 修改页面标题
     document.title = 'Connecting to Payment Gateway...';
     
-    // 调用 API 获取跳转链接
+    // 🚀 优化：如果服务端已经获取了 jumpUrl，直接跳转，不再调用 API
+    if (jumpUrl) {
+      console.log('Using server-provided jumpUrl, skipping API call');
+      window.location.href = jumpUrl;
+      return;
+    }
+    
+    // 如果服务端没有提供 jumpUrl（降级方案），客户端调用 API
+    console.log('Server did not provide jumpUrl, fetching from client');
     fetch('https://api.antsports.tv/api/jump-url', {
       method: 'POST',
       headers: {
@@ -36,7 +50,7 @@ export default function PaymentRedirectHandler({ orderSn }: { orderSn: string })
         console.error('Error fetching jump URL:', error);
         setError(true);
       });
-  }, [orderSn]);
+  }, [orderSn, jumpUrl]);
 
   // 如果出错，显示错误提示（可选）
   if (error) {
