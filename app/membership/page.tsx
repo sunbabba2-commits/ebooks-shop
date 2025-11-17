@@ -1,6 +1,5 @@
 import Footer from 'components/layout/footer';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 import PaymentRedirectHandler from './PaymentRedirectHandler';
 
@@ -323,20 +322,10 @@ function NormalMembershipPage() {
 }
 
 // 主页面 - 服务端组件
-export default async function MembershipPage({
-  searchParams
-}: {
-  searchParams: Promise<{ orderSn?: string }>
-}) {
-  const params = await searchParams;
-  const orderSn = params.orderSn;
-
-  // 🚀 如果有 orderSn，直接重定向到 API Route Handler
-  // 这样可以实现最快的重定向，用户完全看不到中间页面
-  if (orderSn) {
-    redirect(`/api/payment-redirect?orderSn=${orderSn}`);
-  }
-
-  // 否则返回正常会员页面
+export default async function MembershipPage() {
+  // 注意：带有 orderSn 的请求会被 middleware.ts 拦截，不会到达这里
+  // middleware 会在渲染之前直接重定向，用户完全看不到页面
+  
+  // 返回正常会员页面
   return <NormalMembershipPage />;
 }
