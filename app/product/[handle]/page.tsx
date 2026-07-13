@@ -73,6 +73,7 @@ export default async function ProductPage(props: { params: Promise<{ handle: str
   };
 
   return (
+    <Suspense fallback={null}>
     <ProductProvider>
       <script
         type="application/ld+json"
@@ -209,6 +210,7 @@ export default async function ProductPage(props: { params: Promise<{ handle: str
       
       <Footer />
     </ProductProvider>
+    </Suspense>
   );
 }
 
