@@ -159,6 +159,20 @@ export async function Navbar() {
               </svg>
             </Link>
 
+            {/* [2026-11-18 支付层] Memberstack 注册/登录弹窗按钮(data-ms-modal 由 memberstack.js 接管) */}
+            <button
+              data-ms-modal="login"
+              className="hidden rounded-full px-4 py-2 text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800 sm:block"
+            >
+              Log in
+            </button>
+            <button
+              data-ms-modal="signup"
+              className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+            >
+              Sign up
+            </button>
+
             {/* Mobile Menu */}
             <div className="lg:hidden">
               <Suspense fallback={null}>
